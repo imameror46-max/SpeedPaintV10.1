@@ -23,13 +23,19 @@ jobs:
 
       - name: Build APK
         run: |
-          mkdir -p work out
-          if [ -f JPGtoSketsa_Kartun_GitHub.zip ]; then
-            unzip -q JPGtoSketsa_Kartun_GitHub.zip -d work
-          else
-            cp -r $(ls -A | grep -v -E '^(work|out|\.git)$') work/
+          echo "Isi repo:"; ls -la
+          if [ ! -f JPGtoSketsa_Kartun_GitHub.zip ]; then
+            echo "ERROR: JPGtoSketsa_Kartun_GitHub.zip tidak ada di root repo. Upload dulu zip-nya."
+            exit 1
           fi
-          DIR=$(dirname "$(find work -name settings.gradle.kts | head -1)")
+          mkdir -p work out
+          unzip -q JPGtoSketsa_Kartun_GitHub.zip -d work
+          SET=$(find work -name settings.gradle.kts | head -1)
+          if [ -z "$SET" ]; then
+            echo "ERROR: settings.gradle.kts tidak ditemukan di dalam zip."
+            exit 1
+          fi
+          DIR=$(dirname "$SET")
           echo "Proyek ada di: $DIR"
           cd "$DIR"
           [ -f gradle.properties ] || printf "android.useAndroidX=true\norg.gradle.jvmargs=-Xmx2g\n" > gradle.properties
