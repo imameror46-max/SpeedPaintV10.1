@@ -1,0 +1,42 @@
+name: Build APK Kartun
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Build APK
+        run: |
+          mkdir -p work out
+          if [ -f JPGtoSketsa_Kartun_GitHub.zip ]; then
+            unzip -q JPGtoSketsa_Kartun_GitHub.zip -d work
+          else
+            cp -r $(ls -A | grep -v -E '^(work|out|\.git)$') work/
+          fi
+          DIR=$(dirname "$(find work -name settings.gradle.kts | head -1)")
+          echo "Proyek ada di: $DIR"
+          cd "$DIR"
+          [ -f gradle.properties ] || printf "android.useAndroidX=true\norg.gradle.jvmargs=-Xmx2g\n" > gradle.properties
+          gradle assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/out/app-debug.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JPGtoSketsa-Kartun-APK
+          path: out/app-debug.apk
